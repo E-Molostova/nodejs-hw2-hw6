@@ -1,15 +1,80 @@
-// const fs = require('fs/promises')
-// const contacts = require('./contacts.json')
+const fs = require("fs/promises");
 
-const listContacts = async () => {}
+const path = require("path");
+const res = require("express/lib/response");
+const { nanoid } = require("nanoid");
 
-const getContactById = async (contactId) => {}
+const pathName = path.join(__dirname, "/contacts.json");
 
-const removeContact = async (contactId) => {}
+const listContacts = async () => {
+  try {
+    const data = await fs.readFile(pathName);
+    const parsedData = JSON.parse(data);
+    return parsedData;
+  } catch (error) {
+    console.log(error.message);
+  }
+};
 
-const addContact = async (body) => {}
+const getContactById = async (contactId) => {
+  try {
+    const data = await fs.readFile(pathName, "utf-8");
+    const parsedData = JSON.parse(data);
+    return (response = parsedData.find(
+      (item) => Number(item.id) === Number(contactId)
+    ));
+  } catch (error) {
+    console.log(error.message);
+  }
+};
 
-const updateContact = async (contactId, body) => {}
+const removeContact = async (contactId) => {
+  try {
+    const data = await fs.readFile(pathName, "utf-8");
+    const parsedData = JSON.parse(data);
+    const filteredData = parsedData.filter(
+      (item) => item.id.toString() !== contactId.toString()
+    );
+    if (filteredData.length !== parsedData.length) {
+      fs.writeFile(pathName, JSON.stringify(filteredData));
+      return { message: "contact deleted" };
+    }
+  } catch (error) {
+    console.log(error.message);
+  }
+};
+
+const addContact = async ({ name, email, phone }) => {
+  const newContact = {
+    id: nanoid(),
+    name: name,
+    email: email,
+    phone: phone,
+  };
+  const data = await fs.readFile(pathName, "utf-8");
+  const parsedData = JSON.parse(data);
+  parsedData.push(newContact);
+  fs.writeFile(pathName, JSON.stringify(parsedData));
+  return newContact;
+};
+
+const updateContact = async (body, contactId) => {
+  const data = await fs.readFile(pathName, "utf-8");
+  const parsedData = JSON.parse(data);
+  const contactToUpdate = parsedData.find(
+    (item) => item.id.toString() === contactId.toString()
+  );
+  if (!contactToUpdate) return;
+  const newContact = {
+    id: contactToUpdate.id,
+    name: body.name,
+    email: body.email,
+    phone: body.phone,
+  };
+  parsedData.splice(parsedData.indexOf(contactToUpdate), 1, newContact);
+  fs.writeFile(pathName, JSON.stringify(parsedData));
+  return newContact;
+};
 
 module.exports = {
   listContacts,
@@ -17,4 +82,4 @@ module.exports = {
   removeContact,
   addContact,
   updateContact,
-}
+};
